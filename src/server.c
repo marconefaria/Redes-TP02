@@ -46,11 +46,18 @@ void *client_thread(void *data)
 
     char caddrstr[BUFSZ];
     addrtostr(caddr, caddrstr, BUFSZ);
-    printf("[log] connection from %s\n", caddrstr);
 
     char buf[BUFSZ];
     memset(buf, 0, BUFSZ);
     size_t count;
+
+    cdata->id > 10 ? sprintf(buf, "New ID: %d\n", cdata->id) : sprintf(buf, "New ID: 0%d\n", cdata->id);
+    count = send(cdata->csock, buf, strlen(buf), 0);
+
+    if (count == strlen(buf))
+    {
+        DATA[cdata->id] = rand() % 1000 / 100.0;
+    }
 
     if (equipment_id < 10)
     {
@@ -65,10 +72,8 @@ void *client_thread(void *data)
     {
         memset(buf, 0, BUFSZ);
         count = recv(cdata->csock, buf, BUFSZ - 1, 0);
-        printf("[msg] %d bytes: %s\n", (int)count, buf);
 
-        sprintf(buf, "remote endpoint: %d\n", cdata->id);
-        handle(buf, cdata->id, equipment_id, DATA);
+        sprintf(buf, "Equipment %d added\n", cdata->id);
         count = send(cdata->csock, buf, strlen(buf), 0);
 
         if (count != strlen(buf))

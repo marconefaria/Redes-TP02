@@ -14,6 +14,8 @@
 
 #define BUFSZ 1024
 
+int equipment_id = 1;
+
 void usage(int argc, char **argv)
 {
     printf("usage: %s <server IP> <server port>\n", argv[0]);
@@ -51,7 +53,8 @@ int main(int argc, char **argv)
     char addrstr[BUFSZ];
     addrtostr(addr, addrstr, BUFSZ);
 
-    printf("connected to %s\n", addrstr);
+    // equipment_id > 10 ? printf("New ID: %s\n", argv[0]) : printf("New ID: 0%s\n", argv[0]);
+    // equipment_id++;
 
     char buf[BUFSZ];
     memset(buf, 0, BUFSZ);
@@ -59,7 +62,8 @@ int main(int argc, char **argv)
     size_t count;
     unsigned total = 0;
 
-    memset(buf, 0, BUFSZ);
+    count = recv(s, buf + total, BUFSZ - total, 0);
+    puts(buf);
 
     while (1)
     {
@@ -86,7 +90,6 @@ int main(int argc, char **argv)
     close(s);
 
     printf("received %u bytes\n", total);
-    puts(buf);
 
     exit(EXIT_SUCCESS);
 }
