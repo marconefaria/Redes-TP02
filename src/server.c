@@ -18,6 +18,7 @@
 #define EQUIPMENT_NUMBER 15
 #define LIST "list"
 #define EQUIPMENT "equipment"
+#define CLOSE "close"
 
 // control number of equipments
 int equipment_id = 0;
@@ -83,16 +84,27 @@ void *client_thread(void *data)
         {
             for (int i = 1; i <= equipment_id; i++)
             {
-                if (i < 10)
+                if (DATA[i] != -1)
                 {
-                    sprintf(aux, "0%d ", i);
-                }
-                else
-                {
-                    sprintf(aux, "%d ", i);
+                    if (i < 10)
+                    {
+                        sprintf(aux, "0%d ", i);
+                    }
+                    else
+                    {
+                        sprintf(aux, "%d ", i);
+                    }
                 }
                 strcat(buf, aux);
             }
+
+            strcat(buf, "\n");
+        }
+        else if (strcmp(CLOSE, entries[0]) == 0)
+        {
+            cdata->id > 10 ? printf("Equipment %d removed\n", cdata->id) : printf("Equipment %d removed\n", cdata->id);
+            DATA[cdata->id] = -1.0;
+            sprintf(buf, "Successful removal\n");
         }
 
         count = send(cdata->csock, buf, strlen(buf), 0);
