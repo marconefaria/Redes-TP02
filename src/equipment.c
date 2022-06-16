@@ -59,7 +59,7 @@ int main(int argc, char **argv)
     size_t count = send(s, buf, strlen(buf) + 1, 0);
     unsigned total = 0;
 
-    printf("mensagem> ");
+    printf(">>> ");
     fgets(buf, BUFSZ - 1, stdin);
 
     if (count != strlen(buf) + 1)

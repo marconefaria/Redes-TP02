@@ -31,5 +31,6 @@
   "files.associations": {
     "string.h": "c",
     "array": "c"
-  }
+  },
+  "C_Cpp.errorSquiggles": "Disabled"
 }
