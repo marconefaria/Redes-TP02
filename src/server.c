@@ -1,5 +1,6 @@
 // common function implemented
 #include "common.h"
+// #include "handlers.h"
 
 // C libraries
 #include <pthread.h>
@@ -14,6 +15,9 @@
 
 // constants using in this file
 #define BUFSZ 1024
+
+// control number of equipments
+int connections = 1;
 
 void usage(int argc, char **argv)
 {
@@ -39,19 +43,23 @@ void *client_thread(void *data)
 
     char buf[BUFSZ];
     memset(buf, 0, BUFSZ);
-    size_t count = recv(cdata->csock, buf, BUFSZ - 1, 0);
-    printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, buf);
+    size_t count;
 
-    sprintf(buf, "remote endpoint: %.1000s\n", caddrstr);
-    count = send(cdata->csock, buf, strlen(buf) + 1, 0);
-
-    if (count != strlen(buf) + 1)
+    while (1)
     {
-        logexit("send");
+        memset(buf, 0, BUFSZ);
+        count = recv(cdata->csock, buf, BUFSZ - 1, 0);
+        printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, buf);
+
+        sprintf(buf, "remote endpoint: %.1000s\n", caddrstr);
+        count = send(cdata->csock, buf, strlen(buf), 0);
+
+        if (count != strlen(buf))
+        {
+            logexit("send");
+        }
     }
     close(cdata->csock);
-
-    pthread_exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -95,7 +103,7 @@ int main(int argc, char **argv)
     addrtostr(addr, addrstr, BUFSZ);
     printf("bound to %s, waiting connections\n", addrstr);
 
-    while (1)
+    while (connections <= 15)
     {
         struct sockaddr_storage cstorage;
         struct sockaddr *caddr = (struct sockaddr *)(&cstorage);
@@ -118,7 +126,10 @@ int main(int argc, char **argv)
 
         pthread_t tid;
         pthread_create(&tid, NULL, client_thread, cdata);
+
+        connections++;
     }
 
+    pthread_exit(EXIT_SUCCESS);
     exit(EXIT_SUCCESS);
 }
