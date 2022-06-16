@@ -14,8 +14,6 @@
 
 #define BUFSZ 1024
 
-int equipment_id = 1;
-
 void usage(int argc, char **argv)
 {
     printf("usage: %s <server IP> <server port>\n", argv[0]);
@@ -54,8 +52,6 @@ int main(int argc, char **argv)
     addrtostr(addr, addrstr, BUFSZ);
 
     printf("connected to %s\n", addrstr);
-    printf("New ID: 0%d\n", equipment_id);
-    equipment_id++;
 
     char buf[BUFSZ];
     memset(buf, 0, BUFSZ);

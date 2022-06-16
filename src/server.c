@@ -17,7 +17,7 @@
 #define BUFSZ 1024
 
 // control number of equipments
-int connections = 1;
+int equipment_id = 0;
 
 void usage(int argc, char **argv)
 {
@@ -29,13 +29,18 @@ void usage(int argc, char **argv)
 struct client_data
 {
     int csock;
+    int id;
     struct sockaddr_storage storage;
 };
 
 void *client_thread(void *data)
 {
+    equipment_id++;
+
     struct client_data *cdata = (struct client_data *)data;
     struct sockaddr *caddr = (struct sockaddr *)(&cdata->storage);
+
+    cdata->id = equipment_id;
 
     char caddrstr[BUFSZ];
     addrtostr(caddr, caddrstr, BUFSZ);
@@ -45,13 +50,22 @@ void *client_thread(void *data)
     memset(buf, 0, BUFSZ);
     size_t count;
 
+    if (equipment_id < 10)
+    {
+        printf("Equipment 0%d added\n", cdata->id);
+    }
+    else
+    {
+        printf("Equipment %d added\n", cdata->id);
+    }
+
     while (1)
     {
         memset(buf, 0, BUFSZ);
         count = recv(cdata->csock, buf, BUFSZ - 1, 0);
-        printf("[msg] %s, %d bytes: %s\n", caddrstr, (int)count, buf);
+        printf("[msg] %d bytes: %s\n", (int)count, buf);
 
-        sprintf(buf, "remote endpoint: %.1000s\n", caddrstr);
+        sprintf(buf, "remote endpoint: %d\n", cdata->id);
         count = send(cdata->csock, buf, strlen(buf), 0);
 
         if (count != strlen(buf))
@@ -59,6 +73,7 @@ void *client_thread(void *data)
             logexit("send");
         }
     }
+
     close(cdata->csock);
 }
 
@@ -103,7 +118,7 @@ int main(int argc, char **argv)
     addrtostr(addr, addrstr, BUFSZ);
     printf("bound to %s, waiting connections\n", addrstr);
 
-    while (connections <= 15)
+    while (equipment_id <= 15)
     {
         struct sockaddr_storage cstorage;
         struct sockaddr *caddr = (struct sockaddr *)(&cstorage);
@@ -126,8 +141,6 @@ int main(int argc, char **argv)
 
         pthread_t tid;
         pthread_create(&tid, NULL, client_thread, cdata);
-
-        connections++;
     }
 
     pthread_exit(EXIT_SUCCESS);
