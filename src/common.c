@@ -21,19 +21,19 @@ int addrparse(const char *addrstr, const char *portstr,
 {
     if (addrstr == NULL || portstr == NULL)
     {
-        // port is not found
+        return -1;
     }
 
     // parse:
-    uint16_t port = (uint16_t)atoi(portstr);
+    uint16_t port = (uint16_t)atoi(portstr); // unsigned short
     if (port == 0)
     {
         return -1;
-        // information not transmisted
+        // information not trasmited
     }
-    port = htons(port);
+    port = htons(port); // host to network short
 
-    struct in_addr inaddr4;
+    struct in_addr inaddr4; // 32-bit IP address
     if (inet_pton(AF_INET, addrstr, &inaddr4))
     {
         struct sockaddr_in *addr4 = (struct sockaddr_in *)storage;
@@ -43,7 +43,7 @@ int addrparse(const char *addrstr, const char *portstr,
         return 0;
     }
 
-    struct in6_addr inaddr6;
+    struct in6_addr inaddr6; // 128-bit IPv6 address
     if (inet_pton(AF_INET6, addrstr, &inaddr6))
     {
         struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)storage;
@@ -82,7 +82,7 @@ void addrtostr(const struct sockaddr *addr, char *str, size_t strsize)
         {
             logexit("ntop");
         }
-        port = ntohs(addr6->sin6_port);
+        port = ntohs(addr6->sin6_port); // network to host short
     }
     else
     {
@@ -97,12 +97,12 @@ void addrtostr(const struct sockaddr *addr, char *str, size_t strsize)
 int server_sockaddr_init(const char *proto, const char *portstr,
                          struct sockaddr_storage *storage)
 {
-    uint16_t port = (uint16_t)atoi(portstr);
+    uint16_t port = (uint16_t)atoi(portstr); // unsigned short
     if (port == 0)
     {
         return -1;
     }
-    port = htons(port);
+    port = htons(port); // host to network short
 
     memset(storage, 0, sizeof(*storage));
     if (0 == strcmp(proto, "v4"))
