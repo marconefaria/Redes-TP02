@@ -16,6 +16,8 @@
 // constants using in this file
 #define BUFSZ 1024
 #define EQUIPMENT_NUMBER 15
+#define LIST "list"
+#define EQUIPMENT "equipment"
 
 // control number of equipments
 int equipment_id = 0;
@@ -59,21 +61,40 @@ void *client_thread(void *data)
         DATA[cdata->id] = rand() % 1000 / 100.0;
     }
 
-    if (equipment_id < 10)
-    {
-        printf("Equipment 0%d added\n", cdata->id);
-    }
-    else
-    {
-        printf("Equipment %d added\n", cdata->id);
-    }
+    equipment_id < 10 ? printf("Equipment 0%d added\n", cdata->id) : printf("Equipment %d added\n", cdata->id);
 
     while (1)
     {
         memset(buf, 0, BUFSZ);
         count = recv(cdata->csock, buf, BUFSZ - 1, 0);
 
-        sprintf(buf, "Equipment %d added\n", cdata->id);
+        char msg[BUFSZ];
+        strcpy(msg, buf);
+        memset(buf, 0, BUFSZ);
+
+        int entryNumbers = countEntryNumbers(msg);
+
+        char *entries[entryNumbers];
+        char aux[16];
+
+        entries[0] = strtok(msg, " ");
+
+        if (strcmp(LIST, entries[0]) == 0)
+        {
+            for (int i = 1; i <= equipment_id; i++)
+            {
+                if (i < 10)
+                {
+                    sprintf(aux, "0%d ", i);
+                }
+                else
+                {
+                    sprintf(aux, "%d ", i);
+                }
+                strcat(buf, aux);
+            }
+        }
+
         count = send(cdata->csock, buf, strlen(buf), 0);
 
         if (count != strlen(buf))

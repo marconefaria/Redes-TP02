@@ -202,35 +202,38 @@ void handle(char buf[], int equipment_id, int equipments, float data[EQUIPMENT_N
         sprintf(buf, "closing connection with server\n");
         exit(EXIT_SUCCESS);
     }
-    else if (strcmp(ADD, entries[0]) == 0)
-    {
-        int auxAdd = addEquipment(data);
-        if (auxAdd == EXIST)
-        {
-            if (equipment_id < 10)
-            {
-                sprintf(buf, "New ID: 0%d\n", equipment_id);
-            }
-            else
-            {
-                sprintf(buf, "New ID: %d\n", equipment_id);
-            }
-        }
-    }
-    // else if ((strcmp(LIST, entries[0]) == 0) && (strcmp(EQUIPMENT, entries[1]) == 0))
+    // else if (strcmp(ADD, entries[0]) == 0)
     // {
-    //     for (int i = 1; i <= equipments; i++)
+    //     int auxAdd = addEquipment(data);
+    //     if (auxAdd == EXIST)
     //     {
-    //         if (i < 10)
+    //         if (equipment_id < 10)
     //         {
-    //             sprintf(buf, "0%d \n", i);
+    //             sprintf(buf, "New ID: 0%d\n", equipment_id);
     //         }
     //         else
     //         {
-    //             sprintf(buf, "%d \n", i);
+    //             sprintf(buf, "New ID: %d\n", equipment_id);
     //         }
     //     }
     // }
+    else if ((strcmp(LIST, entries[0]) == 0) && (strcmp(EQUIPMENT, entries[1]) == 0))
+    {
+        char aux[32];
+
+        for (int i = 1; i <= equipments; i++)
+        {
+            if (i < 10)
+            {
+                sprintf(aux, "0%d \n", i);
+            }
+            else
+            {
+                sprintf(aux, "%d \n", i);
+            }
+            strcat(buf, aux);
+        }
+    }
     // else if ((strcmp(REMOVE, entries[0]) == 0) && (strcmp(SENSOR, entries[1]) == 0))
     // {
     //     sprintf(buf, "0%d \n", i);
