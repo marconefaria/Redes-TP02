@@ -1,6 +1,6 @@
 // common function implemented
 #include "common.h"
-// #include "handlers.h"
+#include "handlers.h"
 
 // C libraries
 #include <pthread.h>
@@ -15,9 +15,11 @@
 
 // constants using in this file
 #define BUFSZ 1024
+#define EQUIPMENT_NUMBER 15
 
 // control number of equipments
 int equipment_id = 0;
+float DATA[EQUIPMENT_NUMBER];
 
 void usage(int argc, char **argv)
 {
@@ -66,6 +68,7 @@ void *client_thread(void *data)
         printf("[msg] %d bytes: %s\n", (int)count, buf);
 
         sprintf(buf, "remote endpoint: %d\n", cdata->id);
+        handle(buf, cdata->id, equipment_id, DATA);
         count = send(cdata->csock, buf, strlen(buf), 0);
 
         if (count != strlen(buf))
@@ -114,11 +117,22 @@ int main(int argc, char **argv)
         logexit("listen");
     }
 
+    for (int i = 1; i <= EQUIPMENT_NUMBER; i++)
+    {
+        DATA[i] = -1.00;
+    }
+
     char addrstr[BUFSZ];
     addrtostr(addr, addrstr, BUFSZ);
     printf("bound to %s, waiting connections\n", addrstr);
 
-    while (equipment_id <= 15)
+    if (equipment_id > 15)
+    {
+        printf("Equipment limit exceeded");
+        exit(EXIT_SUCCESS);
+    }
+
+    while (1)
     {
         struct sockaddr_storage cstorage;
         struct sockaddr *caddr = (struct sockaddr *)(&cstorage);
