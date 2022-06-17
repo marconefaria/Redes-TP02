@@ -15,10 +15,12 @@
 
 // constants using in this file
 #define BUFSZ 1024
+
 #define EQUIPMENT_NUMBER 15
 #define LIST "list"
 #define EQUIPMENT "equipment"
 #define CLOSE "close"
+#define REQUEST "request"
 
 // control number of equipments
 int equipment_id = 0;
@@ -40,6 +42,9 @@ struct client_data
 
 void *client_thread(void *data)
 {
+    char buf[BUFSZ];
+    memset(buf, 0, BUFSZ);
+    size_t count;
     equipment_id++;
 
     struct client_data *cdata = (struct client_data *)data;
@@ -50,68 +55,87 @@ void *client_thread(void *data)
     char caddrstr[BUFSZ];
     addrtostr(caddr, caddrstr, BUFSZ);
 
-    char buf[BUFSZ];
-    memset(buf, 0, BUFSZ);
-    size_t count;
-
-    cdata->id > 10 ? sprintf(buf, "New ID: %d\n", cdata->id) : sprintf(buf, "New ID: 0%d\n", cdata->id);
-    count = send(cdata->csock, buf, strlen(buf), 0);
-
-    if (count == strlen(buf))
+    if (equipment_id > 15)
     {
-        DATA[cdata->id] = rand() % 1000 / 100.0;
+        printf("Equipment limit exceeded");
+        sprintf(buf, "Equipment limit exceeded");
+        exit(EXIT_SUCCESS);
     }
-
-    equipment_id < 10 ? printf("Equipment 0%d added\n", cdata->id) : printf("Equipment %d added\n", cdata->id);
-
-    while (1)
+    else
     {
-        memset(buf, 0, BUFSZ);
-        count = recv(cdata->csock, buf, BUFSZ - 1, 0);
-
-        char msg[BUFSZ];
-        strcpy(msg, buf);
-        memset(buf, 0, BUFSZ);
-
-        int entryNumbers = countEntryNumbers(msg);
-
-        char *entries[entryNumbers];
-        char aux[16];
-
-        entries[0] = strtok(msg, " ");
-
-        if (strcmp(LIST, entries[0]) == 0)
-        {
-            for (int i = 1; i <= equipment_id; i++)
-            {
-                if (DATA[i] != -1)
-                {
-                    if (i < 10)
-                    {
-                        sprintf(aux, "0%d ", i);
-                    }
-                    else
-                    {
-                        sprintf(aux, "%d ", i);
-                    }
-                }
-                strcat(buf, aux);
-            }
-
-            strcat(buf, "\n");
-        }
-        else if (strcmp(CLOSE, entries[0]) == 0)
-        {
-            cdata->id > 10 ? printf("Equipment %d removed\n", cdata->id) : printf("Equipment %d removed\n", cdata->id);
-            DATA[cdata->id] = -1.0;
-            sprintf(buf, "Successful removal\n");
-        }
-
+        cdata->id > 10 ? sprintf(buf, "New ID: %d\n", cdata->id) : sprintf(buf, "New ID: 0%d\n", cdata->id);
         count = send(cdata->csock, buf, strlen(buf), 0);
 
-        if (count != strlen(buf))
+        if (count == strlen(buf))
         {
-            logexit("send");
+            DATA[cdata->id] = rand() % 1000 / 100.0;
+        }
+
+        equipment_id < 10 ? printf("Equipment 0%d added\n", cdata->id) : printf("Equipment %d added\n", cdata->id);
+
+        while (1)
+        {
+            memset(buf, 0, BUFSZ);
+            count = recv(cdata->csock, buf, BUFSZ - 1, 0);
+
+            char msg[BUFSZ];
+            strcpy(msg, buf);
+            memset(buf, 0, BUFSZ);
+
+            int entryNumbers = countEntryNumbers(msg);
+
+            char *entries[entryNumbers];
+            char aux[16];
+
+            entries[0] = strtok(msg, " ");
+            int positionReq = atoi(entries[3]);
+
+            if (strcmp(LIST, entries[0]) == 0)
+            {
+                for (int i = 1; i <= EQUIPMENT_NUMBER; i++)
+                {
+                    if (DATA[i] != -1)
+                    {
+                        if (i < 10)
+                        {
+                            sprintf(aux, "0%d ", i);
+                        }
+                        else
+                        {
+                            sprintf(aux, "%d ", i);
+                        }
+                        strcat(buf, aux);
+                    }
+                }
+
+                strcat(buf, " ");
+            }
+            else if (strcmp(CLOSE, entries[0]) == 0)
+            {
+                cdata->id > 10 ? printf("Equipment %d removed\n", cdata->id) : printf("Equipment 0%d removed\n", cdata->id);
+                DATA[cdata->id] = -1.0;
+                sprintf(buf, "Successful removal\n");
+                // close(cdata->csock);
+            }
+            else if (strcmp(REQUEST, entries[0]) == 0)
+            {
+                if (DATA[positionReq] != -1.00)
+                {
+                    // ERRADO
+                    sprintf(buf, "Value from %s: %.2f\n", entries[3], DATA[positionReq]);
+                }
+                else
+                {
+                    printf("Equipment %s not found\n", entries[3]);
+                }
+            }
+
+            count = send(cdata->csock, buf, strlen(buf), 0);
+
+            if (count != strlen(buf))
+            {
+                logexit("send");
+            }
         }
     }
 
@@ -163,12 +187,6 @@ int main(int argc, char **argv)
     char addrstr[BUFSZ];
     addrtostr(addr, addrstr, BUFSZ);
     printf("bound to %s, waiting connections\n", addrstr);
-
-    if (equipment_id > 15)
-    {
-        printf("Equipment limit exceeded");
-        exit(EXIT_SUCCESS);
-    }
 
     while (1)
     {
