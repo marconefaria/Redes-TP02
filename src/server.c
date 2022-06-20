@@ -82,13 +82,18 @@ void *client_thread(void *data)
             strcpy(msg, buf);
             memset(buf, 0, BUFSZ);
 
+            int currentPosition = 0;
             int entryNumbers = countEntryNumbers(msg);
 
-            char *entries[entryNumbers];
+            char *entries[entryNumbers + 2];
             char aux[16];
+            int positionReq = 0;
 
             entries[0] = strtok(msg, " ");
-            int positionReq = atoi(entries[3]);
+            for (currentPosition = 1; currentPosition < entryNumbers; currentPosition++)
+            {
+                entries[currentPosition] = strtok(NULL, " ");
+            }
 
             if (strcmp(LIST, entries[0]) == 0)
             {
@@ -119,14 +124,15 @@ void *client_thread(void *data)
             }
             else if (strcmp(REQUEST, entries[0]) == 0)
             {
+                positionReq = atoi(entries[3]);
                 if (DATA[positionReq] != -1.00)
                 {
-                    // ERRADO
-                    sprintf(buf, "Value from %s: %.2f\n", entries[3], DATA[positionReq]);
+                    positionReq > 10 ? sprintf(buf, "Value from %d: %.2f", positionReq, DATA[positionReq]) : sprintf(buf, "Value from 0%d: %.2f", positionReq, DATA[positionReq]);
                 }
                 else
                 {
-                    printf("Equipment %s not found\n", entries[3]);
+                    positionReq > 10 ? printf("Equipment %d not found", positionReq) : printf("Equipment 0%d not found", positionReq);
+                    positionReq > 10 ? sprintf(buf, "Equipment %d not found", positionReq) : sprintf(buf, "Equipment 0%d not found", positionReq);
                 }
             }
 
