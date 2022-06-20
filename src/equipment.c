@@ -53,9 +53,6 @@ int main(int argc, char **argv)
     char addrstr[BUFSZ];
     addrtostr(addr, addrstr, BUFSZ);
 
-    // equipment_id > 10 ? printf("New ID: %s\n", argv[0]) : printf("New ID: 0%s\n", argv[0]);
-    // equipment_id++;
-
     char buf[BUFSZ];
     memset(buf, 0, BUFSZ);
 
@@ -64,6 +61,25 @@ int main(int argc, char **argv)
 
     count = recv(s, buf + total, BUFSZ - total, 0);
     puts(buf);
+
+    int b = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (b == -1)
+    {
+        logexit("socket");
+    }
+
+    int broadcastPerm = 1;
+    int ret = setsockopt(b, SOL_SOCKET, SO_BROADCAST, &broadcastPerm, sizeof(broadcastPerm));
+
+    struct sockaddr_in broadcastAddr;
+    socklen_t bLenght = sizeof(broadcastAddr);
+    memset(&broadcastAddr, 0, sizeof(broadcastAddr));
+    broadcastAddr.sin_family = AF_INET;
+    broadcastAddr.sin_port = htons(51511);
+    broadcastAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    char _buf[BUFSZ];
+    memset(_buf, 0, BUFSZ);
 
     while (1)
     {
@@ -76,7 +92,14 @@ int main(int argc, char **argv)
             logexit("send");
         }
 
+        ret = sendto(b, _buf, strlen(_buf), 0, (struct sockaddr *)&broadcastAddr, sizeof(broadcastAddr));
+        if (ret != strlen(_buf))
+        {
+            logexit("send");
+        }
+
         memset(buf, 0, BUFSZ);
+        memset(_buf, 0, BUFSZ);
         total = 0;
         count = recv(s, buf + total, BUFSZ - total, 0);
         puts(buf);
@@ -84,10 +107,20 @@ int main(int argc, char **argv)
         {
             break;
         }
+
+        ret = recvfrom(b, _buf + total, BUFSZ - total, 0, (struct sockaddr *)&broadcastAddr, &bLenght);
+        puts(_buf);
+        if (ret == 0)
+        {
+            break;
+        }
+
         total += count;
         memset(buf, 0, BUFSZ);
+        memset(_buf, 0, BUFSZ);
     }
     close(s);
+    close(b);
 
     printf("received %u bytes\n", total);
 
