@@ -51,6 +51,15 @@ void *client_thread(void *data)
     char caddrstr[BUFSZ];
     addrtostr(caddr, caddrstr, BUFSZ);
 
+    for (int i = 1; i <= EQUIPMENT_NUMBER; i++)
+    {
+        if (DATA[i] == -1)
+        {
+            equipment_id = i;
+            break;
+        }
+    }
+
     if (equipment_id > 15)
     {
         printf("Equipment limit exceeded");
