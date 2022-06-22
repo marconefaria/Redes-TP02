@@ -23,13 +23,6 @@ void usage(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-    const char *server_IP = argv[1];
-    in_port_t server_port = atoi(argv[2]);
-
-    int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (sock < 0)
-        logexit("Failed to create socket");
-
     if (argc < 3)
     {
         usage(argc, argv);
@@ -41,17 +34,22 @@ int main(int argc, char **argv)
         usage(argc, argv);
     }
 
-    struct sockaddr_in server_address;
-    memset(&server_address, 0, sizeof(server_address));
-    server_address.sin_family = AF_INET;
+    int s;
+    s = socket(storage.ss_family, SOCK_STREAM, 0);
 
-    if (inet_pton(AF_INET, server_IP, &server_address.sin_addr.s_addr) <= 0)
-        logexit("Failed to convert server address");
+    if (s == -1)
+    {
+        logexit("socket");
+    }
 
-    server_address.sin_port = htons(server_port);
+    struct sockaddr *addr = (struct sockaddr *)(&storage);
+    if (0 != connect(s, addr, sizeof(storage)))
+    {
+        logexit("connect");
+    }
 
-    if (connect(sock, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
-        logexit("Failed to connect");
+    char addrstr[BUFSZ];
+    addrtostr(addr, addrstr, BUFSZ);
 
     char buf[BUFSZ];
     memset(buf, 0, BUFSZ);
@@ -59,7 +57,7 @@ int main(int argc, char **argv)
     size_t count;
     unsigned total = 0;
 
-    count = recv(sock, buf + total, BUFSZ - total, 0);
+    count = recv(s, buf + total, BUFSZ - total, 0);
     puts(buf);
 
     while (1)
@@ -67,16 +65,15 @@ int main(int argc, char **argv)
         printf(">>> ");
         fgets(buf, BUFSZ - 1, stdin);
 
-        count = send(sock, buf, strlen(buf), 0);
+        count = send(s, buf, strlen(buf), 0);
         if (count != strlen(buf))
         {
             logexit("send");
         }
 
         memset(buf, 0, BUFSZ);
-
         total = 0;
-        count = recv(sock, buf + total, BUFSZ - total, 0);
+        count = recv(s, buf + total, BUFSZ - total, 0);
         puts(buf);
         if (count == 0)
         {
@@ -85,8 +82,7 @@ int main(int argc, char **argv)
         total += count;
         memset(buf, 0, BUFSZ);
     }
-
-    close(sock);
+    close(s);
 
     printf("received %u bytes\n", total);
 

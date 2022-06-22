@@ -62,8 +62,16 @@ void *client_thread(void *data)
 
     if (equipment_id > 15)
     {
-        printf("Equipment limit exceeded");
-        sprintf(buf, "Equipment limit exceeded");
+        printf("Equipment limit exceeded\n");
+        sprintf(buf, "Equipment limit exceeded\n");
+
+        count = send(cdata->csock, buf, strlen(buf), 0);
+
+        if (count != strlen(buf))
+        {
+            logexit("send");
+        }
+
         exit(EXIT_SUCCESS);
     }
     else
@@ -126,7 +134,6 @@ void *client_thread(void *data)
                 cdata->id > 10 ? printf("Equipment %d removed\n", cdata->id) : printf("Equipment 0%d removed\n", cdata->id);
                 DATA[cdata->id] = -1.0;
                 sprintf(buf, "Successful removal\n");
-                // close(cdata->csock);
             }
             else if (strcmp(REQUEST, entries[0]) == 0)
             {
@@ -152,14 +159,6 @@ void *client_thread(void *data)
             if (count != strlen(buf))
             {
                 logexit("send");
-            }
-
-            if (DATA[equipment_id + 1] != -1.00)
-            {
-                // memset(buf, 0, BUFSZ);
-                sprintf(buf, "Equipment %d added\n", equipment_id + 1);
-
-                count = send(cdata->csock, buf, strlen(buf), 0);
             }
         }
     }
