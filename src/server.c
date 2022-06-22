@@ -124,13 +124,18 @@ void *client_thread(void *data)
                 positionReq = atoi(entries[3]);
                 if (DATA[positionReq] != -1.00)
                 {
-                    positionReq > 10 ? sprintf(buf, "Value from %d: %.2f", positionReq, DATA[positionReq]) : sprintf(buf, "Value from 0%d: %.2f", positionReq, DATA[positionReq]);
+                    positionReq > 10 ? sprintf(buf, "Value from %d: %.2f\n", positionReq, DATA[positionReq]) : sprintf(buf, "Value from 0%d: %.2f\n", positionReq, DATA[positionReq]);
                 }
                 else
                 {
-                    positionReq > 10 ? printf("Equipment %d not found", positionReq) : printf("Equipment 0%d not found", positionReq);
-                    positionReq > 10 ? sprintf(buf, "Equipment %d not found", positionReq) : sprintf(buf, "Equipment 0%d not found", positionReq);
+                    positionReq > 10 ? printf("Equipment %d not found\n", positionReq) : printf("Equipment 0%d not found\n", positionReq);
+                    positionReq > 10 ? sprintf(buf, "Equipment %d not found\n", positionReq) : sprintf(buf, "Equipment 0%d not found\n", positionReq);
                 }
+            }
+            else
+            {
+                printf("Invalid command\n");
+                sprintf(buf, "Invalid command\n");
             }
 
             count = send(cdata->csock, buf, strlen(buf), 0);
@@ -138,6 +143,14 @@ void *client_thread(void *data)
             if (count != strlen(buf))
             {
                 logexit("send");
+            }
+
+            if (DATA[equipment_id + 1] != -1.00)
+            {
+                // memset(buf, 0, BUFSZ);
+                sprintf(buf, "Equipment %d added\n", equipment_id + 1);
+
+                count = send(cdata->csock, buf, strlen(buf), 0);
             }
         }
     }
