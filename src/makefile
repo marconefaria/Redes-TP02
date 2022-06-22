@@ -1,10 +1,9 @@
 all:
-	gcc -Wall -c common.c
-	gcc -Wall -c handlers.c 
-	gcc -Wall equipment.c common.o -o equipment
-	gcc -Wall server.c common.o handlers.o -lpthread -o server
+	gcc -Wall -c util.c
+	gcc -Wall equipment.c util.o -o equipment.o
+	gcc -Wall server.c util.o -lpthread -o server.o
 clean:
-	rm common.o equipment server server
+	rm util.o equipment.o server.o 
 
 # all:
 # 	gcc -Wall -c common.c

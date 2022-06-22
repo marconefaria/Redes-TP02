@@ -1,6 +1,5 @@
 // common function implemented
-#include "common.h"
-#include "handlers.h"
+#include "util.h"
 
 // C libraries
 #include <pthread.h>
@@ -12,20 +11,16 @@
 // socket libraries
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <arpa/inet.h>
 
 // constants using in this file
 #define BUFSZ 1024
+int equipment_id = 0;
 
 #define EQUIPMENT_NUMBER 15
 #define LIST "list"
 #define EQUIPMENT "equipment"
 #define CLOSE "close"
 #define REQUEST "request"
-
-// control number of equipments
-int equipment_id = 0;
-float DATA[EQUIPMENT_NUMBER];
 
 void usage(int argc, char **argv)
 {
@@ -45,31 +40,11 @@ void *client_thread(void *data)
 {
     char buf[BUFSZ];
     memset(buf, 0, BUFSZ);
-
-    char _buf[BUFSZ];
-    memset(_buf, 0, BUFSZ);
-
     size_t count;
-
     equipment_id++;
 
     struct client_data *cdata = (struct client_data *)data;
     struct sockaddr *caddr = (struct sockaddr *)(&cdata->storage);
-
-    int csock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (csock == -1)
-    {
-        logexit("accept");
-    }
-
-    int broadcastPerm = 1;
-    int ret = setsockopt(csock, SOL_SOCKET, SO_BROADCAST, &broadcastPerm, sizeof(broadcastPerm));
-
-    struct sockaddr_in broadcastAddr;
-    memset(&broadcastAddr, 0, sizeof(broadcastAddr));
-    broadcastAddr.sin_family = AF_INET;
-    broadcastAddr.sin_port = htons(51511);
-    broadcastAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     cdata->id = equipment_id;
 
@@ -78,13 +53,13 @@ void *client_thread(void *data)
 
     if (equipment_id > 15)
     {
-        printf("Equipment limit exceeded\n");
-        sprintf(buf, "Equipment limit exceeded\n");
+        printf("Equipment limit exceeded");
+        sprintf(buf, "Equipment limit exceeded");
         exit(EXIT_SUCCESS);
     }
     else
     {
-        cdata->id > 10 ? sprintf(buf, "New ID: %d", cdata->id) : sprintf(buf, "New ID: 0%d", cdata->id);
+        cdata->id > 10 ? sprintf(buf, "New ID: %d\n", cdata->id) : sprintf(buf, "New ID: 0%d\n", cdata->id);
         count = send(cdata->csock, buf, strlen(buf), 0);
 
         if (count == strlen(buf))
@@ -100,6 +75,7 @@ void *client_thread(void *data)
             count = recv(cdata->csock, buf, BUFSZ - 1, 0);
 
             char msg[BUFSZ];
+
             strcpy(msg, buf);
             memset(buf, 0, BUFSZ);
 
@@ -148,21 +124,18 @@ void *client_thread(void *data)
                 positionReq = atoi(entries[3]);
                 if (DATA[positionReq] != -1.00)
                 {
-                    positionReq > 10 ? sprintf(buf, "Value from %d: %.2f\n", positionReq, DATA[positionReq]) : sprintf(buf, "Value from 0%d: %.2f\n", positionReq, DATA[positionReq]);
+                    positionReq > 10 ? sprintf(buf, "Value from %d: %.2f", positionReq, DATA[positionReq]) : sprintf(buf, "Value from 0%d: %.2f", positionReq, DATA[positionReq]);
                 }
                 else
                 {
-                    positionReq > 10 ? printf("Equipment %d not found\n", positionReq) : printf("Equipment 0%d not found\n", positionReq);
-                    positionReq > 10 ? sprintf(buf, "Equipment %d not found\n", positionReq) : sprintf(buf, "Equipment 0%d not found\n", positionReq);
+                    positionReq > 10 ? printf("Equipment %d not found", positionReq) : printf("Equipment 0%d not found", positionReq);
+                    positionReq > 10 ? sprintf(buf, "Equipment %d not found", positionReq) : sprintf(buf, "Equipment 0%d not found", positionReq);
                 }
             }
 
-            sprintf(_buf, "Equipment %d removed\n", cdata->id);
-
             count = send(cdata->csock, buf, strlen(buf), 0);
-            ret = sendto(csock, _buf, strlen(_buf), 0, (struct sockaddr *)&broadcastAddr, sizeof(broadcastAddr));
 
-            if ((count != strlen(buf)) && (ret != strlen(_buf)))
+            if (count != strlen(buf))
             {
                 logexit("send");
             }
@@ -170,7 +143,6 @@ void *client_thread(void *data)
     }
 
     close(cdata->csock);
-    close(csock);
 }
 
 int main(int argc, char **argv)

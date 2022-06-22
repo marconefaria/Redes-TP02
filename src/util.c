@@ -1,11 +1,12 @@
 // common  functions implemented
-#include "common.h"
+#include "util.h"
 
 // C libraries
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 // socket libraries
 #include <arpa/inet.h>
@@ -89,4 +90,20 @@ int server_sockaddr_init(const char *portstr, struct sockaddr_storage *storage)
     addr4->sin_addr.s_addr = INADDR_ANY;
     addr4->sin_port = port;
     return 0;
+}
+
+int countEntryNumbers(char temporary_string[])
+{
+    int result = 1, counter = 0;
+
+    while (temporary_string[counter] != '\n')
+    {
+        if (temporary_string[counter] == SPACE)
+        {
+            result += 1;
+        }
+        counter += 1;
+    }
+
+    return result;
 }

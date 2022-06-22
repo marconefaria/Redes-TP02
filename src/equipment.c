@@ -1,5 +1,5 @@
 // common functions implemented
-#include "common.h"
+#include "util.h"
 
 // C libraries
 #include <stdlib.h>
@@ -14,8 +14,6 @@
 
 #define BUFSZ 1024
 
-int equipment_id = 1;
-
 void usage(int argc, char **argv)
 {
     printf("usage: %s <server IP> <server port>\n", argv[0]);
@@ -25,6 +23,13 @@ void usage(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+    const char *server_IP = argv[1];
+    in_port_t server_port = atoi(argv[2]);
+
+    int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (sock < 0)
+        logexit("Failed to create socket");
+
     if (argc < 3)
     {
         usage(argc, argv);
@@ -36,22 +41,17 @@ int main(int argc, char **argv)
         usage(argc, argv);
     }
 
-    int s;
-    s = socket(storage.ss_family, SOCK_STREAM, 0);
+    struct sockaddr_in server_address;
+    memset(&server_address, 0, sizeof(server_address));
+    server_address.sin_family = AF_INET;
 
-    if (s == -1)
-    {
-        logexit("socket");
-    }
+    if (inet_pton(AF_INET, server_IP, &server_address.sin_addr.s_addr) <= 0)
+        logexit("Failed to convert server address");
 
-    struct sockaddr *addr = (struct sockaddr *)(&storage);
-    if (0 != connect(s, addr, sizeof(storage)))
-    {
-        logexit("connect");
-    }
+    server_address.sin_port = htons(server_port);
 
-    char addrstr[BUFSZ];
-    addrtostr(addr, addrstr, BUFSZ);
+    if (connect(sock, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
+        logexit("Failed to connect");
 
     char buf[BUFSZ];
     memset(buf, 0, BUFSZ);
@@ -59,68 +59,34 @@ int main(int argc, char **argv)
     size_t count;
     unsigned total = 0;
 
-    count = recv(s, buf + total, BUFSZ - total, 0);
+    count = recv(sock, buf + total, BUFSZ - total, 0);
     puts(buf);
-
-    int b = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (b == -1)
-    {
-        logexit("socket");
-    }
-
-    int broadcastPerm = 1;
-    int ret = setsockopt(b, SOL_SOCKET, SO_BROADCAST, &broadcastPerm, sizeof(broadcastPerm));
-
-    struct sockaddr_in broadcastAddr;
-    socklen_t bLenght = sizeof(broadcastAddr);
-    memset(&broadcastAddr, 0, sizeof(broadcastAddr));
-    broadcastAddr.sin_family = AF_INET;
-    broadcastAddr.sin_port = htons(51511);
-    broadcastAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-    char _buf[BUFSZ];
-    memset(_buf, 0, BUFSZ);
 
     while (1)
     {
         printf(">>> ");
         fgets(buf, BUFSZ - 1, stdin);
 
-        count = send(s, buf, strlen(buf), 0);
+        count = send(sock, buf, strlen(buf), 0);
         if (count != strlen(buf))
         {
             logexit("send");
         }
 
-        ret = sendto(b, _buf, strlen(_buf), 0, (struct sockaddr *)&broadcastAddr, sizeof(broadcastAddr));
-        if (ret != strlen(_buf))
-        {
-            logexit("send");
-        }
-
         memset(buf, 0, BUFSZ);
-        memset(_buf, 0, BUFSZ);
+
         total = 0;
-        count = recv(s, buf + total, BUFSZ - total, 0);
+        count = recv(sock, buf + total, BUFSZ - total, 0);
         puts(buf);
         if (count == 0)
         {
             break;
         }
-
-        ret = recvfrom(b, _buf + total, BUFSZ - total, 0, (struct sockaddr *)&broadcastAddr, &bLenght);
-        puts(_buf);
-        if (ret == 0)
-        {
-            break;
-        }
-
         total += count;
         memset(buf, 0, BUFSZ);
-        memset(_buf, 0, BUFSZ);
     }
-    close(s);
-    close(b);
+
+    close(sock);
 
     printf("received %u bytes\n", total);
 
